@@ -3,31 +3,201 @@ Pablo O Rodriguez
 
 
 
-## R Markdown
+## Introduction
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+This documents summarizes the analysis I performed following the JHU Coursera Practical Machine learning course project instructions. The task was to develop a machine learning model to predict the class of exercise quality during an experiment. The goal of the experiment was to assess whether mistakes could be detected in weight-lifting exercises by using activity recognition techniques. Authors recorded users performing the same activity correctly and with a set of common mistakes with wearable sensors. Detailed information can be found [here](http://groupware.les.inf.puc-rio.br/public/papers/2013.Velloso.QAR-WLE.pdf).  
+Six articipants were asked to perform one set of 10 repetitions of the Unilateral Dumbbell Biceps Curl in five different fashions (classes):  
+    - A: exactly according to the specification  
+    - B: throwing the elbows to the front  
+    - C: lifting the dumbbell only halfway  
+    - D: lowering the dumbbell only halfway  
+    - E: throwing the hips to the front  
+Features were: Euler angles (roll, pitch and yaw, see [wikipedia](https://en.wikipedia.org/wiki/Euler_angles)), as well as the raw accelerometer, gyroscope and magnetometer readings from wearable sensors in the participans’ glove, armband, lumbar belt and
+dumbbell. [Read more](http://groupware.les.inf.puc-rio.br/har#ixzz48lsA1uQ3)
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+##Data processing
+Data was downloaded to the working directory, loaded, and cleaned (in the training set there were several variables with a large number of missing values. This were calculated features by the authors which I will not use). The first 7 variables in the data.frame contain useless informations for the prediction model, so I excluded them.
 
 
 ```r
-summary(cars)
+##Load required libraries
+suppressPackageStartupMessages({library (caret); library (ggplot2)})
+
+################################Getting data####
+##First download training and test data files if they are not in the
+##working directory
+
+if(!file.exists("dataTraining.txt")){
+  download.file("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv",
+                "dataTraining.txt")
+}
+
+if(!file.exists("dataTest.txt")){
+  download.file("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv",
+                "dataTest.txt")
+}
+
+##Load training and test data (the latter to be used for the 2nd part of the course project assignment)
+
+dataTraining<-read.csv("dataTraining.txt",header = TRUE,stringsAsFactors = FALSE,na.strings = c("","NA"))
+dataTest<-read.csv("dataTest.txt", header = TRUE, stringsAsFactors = FALSE,na.strings = c("","NA"))
+
+
+########################Cleaning data##############
+##Detecting variables with rate of missing data and selecting variables of data.frames
+naVar<-apply(dataTraining,2, function (x) mean(is.na(x)))
+
+dataTraining<-dataTraining[,naVar<0.5]
+dataTest<-dataTest[,naVar<0.5]
+
+
+##Subsetting interesting variables
+
+dataTraining<-dataTraining[,8:ncol(dataTraining)]
+dataTest<-dataTest[,8:ncol(dataTest)]
+```
+
+The resulting dataset has 19622 rows and 53 columns. The outcome is *classe* as explained above and there are 52 potential predictors. This dataset was split in 2 (training and test set, ratio 70:30) to train and set the prediction model.
+
+```r
+##########################Spliting data in training and test sets###############
+##Split dataTraining in 2 training and test set for out of sample error estimation
+
+trainingSubset<-createDataPartition(y = dataTraining$classe,p = .7,list = FALSE)
+
+training<-dataTraining[trainingSubset,]
+test<-dataTraining[-trainingSubset,]
+```
+
+To reduce the dimensions of the covariates matrix, I first eliminated highly correlated variables using the caret::findCorrelation function (see the [caret tutorial](http://topepo.github.io/caret/preprocess.html)).
+
+
+```r
+##eliminates highly correlated variables (r>.9)
+corMatrix<-cor(training[,-53])
+highCor<-findCorrelation(corMatrix,cutoff = .9)
+
+training<-training[,-highCor]
+test<-test[,-highCor]
+```
+
+There were 0 predictors with near zero variance to exclude.  
+
+##Models training  
+This is a classification problem, so I decided to evaluate the performance of 3 different approaches on the training data set: linear discrimination analysis (LDA), quadratic discrimination analysis (QDA), boosting trees (GBM: gradient boosting machine) and random forest (RF). In each case I used 10 k-fold cross validation for accuracy and out of the sample error stimation.
+
+
+```r
+########################################### Modeling##################
+###Modelling with caret::train function with 10 k-fold cross validation
+tc<-trainControl(method = "cv",number = 10)
+
+##LDA model
+set.seed(1234)
+modelLDA<-train(form = classe ~ .,
+                data = training,
+                trControl=tc,
+                method="lda",
+                verbose=FALSE)
+
+##QDA model
+set.seed(1234)
+modelQDA<-train(form = classe ~ .,
+                data = training,
+                trControl=tc,
+                method="qda",
+                verbose=FALSE)
+
+
+##Boosted tree model (gbm, gradient boosting machine)
+set.seed(1234)
+modelBoost<-train(form = classe ~ .,
+                  data = training, 
+                  trControl=tc, 
+                  method="gbm",
+                  verbose=FALSE)
+##Random forest
+set.seed(1234)
+modelRF<-train(form = classe ~ .,
+                  data = training, 
+                  trControl=tc, 
+                  method="rf",
+                  verbose=FALSE)
+```
+
+**Expected bias and variance with k-fold cross validation**
+
+The plot shows the accuracy and kappa value from all the models:
+
+```r
+######################Model selection####################
+##Choose best model comparing metrics on cv
+resamps <- resamples(list(LDA = modelLDA,
+                          QDA = modelQDA,
+                          GBM = modelBoost,
+                          RF= modelRF))
+
+bwplot(resamps)
+```
+
+![](index_files/figure-html/comparing Accuracy-1.png)<!-- -->
+
+RF appears as the most accurate model with a low out of the sample error stimation in the cross validation. Thus I use it to evaluate with the test set.
+
+##Testing the RF model with test set (from the initial split)
+This is the result of the caret::confusionMatrix function of the RF model on the test dataset.
+
+```r
+#####################testing RF model on test set##############
+testPrediction<-predict(modelRF,test)
+
+confusionMatrix(testPrediction,test$classe)
 ```
 
 ```
-##      speed           dist       
-##  Min.   : 4.0   Min.   :  2.00  
-##  1st Qu.:12.0   1st Qu.: 26.00  
-##  Median :15.0   Median : 36.00  
-##  Mean   :15.4   Mean   : 42.98  
-##  3rd Qu.:19.0   3rd Qu.: 56.00  
-##  Max.   :25.0   Max.   :120.00
+## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction    A    B    C    D    E
+##          A 1668    6    0    0    0
+##          B    4 1133    8    0    0
+##          C    0    0 1013   14    2
+##          D    0    0    5  950    3
+##          E    2    0    0    0 1077
+## 
+## Overall Statistics
+##                                         
+##                Accuracy : 0.9925        
+##                  95% CI : (0.99, 0.9946)
+##     No Information Rate : 0.2845        
+##     P-Value [Acc > NIR] : < 2.2e-16     
+##                                         
+##                   Kappa : 0.9905        
+##  Mcnemar's Test P-Value : NA            
+## 
+## Statistics by Class:
+## 
+##                      Class: A Class: B Class: C Class: D Class: E
+## Sensitivity            0.9964   0.9947   0.9873   0.9855   0.9954
+## Specificity            0.9986   0.9975   0.9967   0.9984   0.9996
+## Pos Pred Value         0.9964   0.9895   0.9845   0.9916   0.9981
+## Neg Pred Value         0.9986   0.9987   0.9973   0.9972   0.9990
+## Prevalence             0.2845   0.1935   0.1743   0.1638   0.1839
+## Detection Rate         0.2834   0.1925   0.1721   0.1614   0.1830
+## Detection Prevalence   0.2845   0.1946   0.1749   0.1628   0.1833
+## Balanced Accuracy      0.9975   0.9961   0.9920   0.9919   0.9975
 ```
 
-## Including Plots
+##Predictions on dataTest set  
+I finally used predict function with the RF model on the dataTest as the assignment in the course project.
 
-You can also embed plots, for example:
+```r
+predict(modelRF, dataTest)
+```
 
-![](index_files/figure-html/pressure-1.png)<!-- -->
+```
+##  [1] B A B A A E D B A A B C B A E E A B B B
+## Levels: A B C D E
+```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+word count: 918
