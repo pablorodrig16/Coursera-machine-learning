@@ -123,7 +123,11 @@ $(document).ready(function () {
 
 <div id="introduction" class="section level2">
 <h2>Introduction</h2>
+<<<<<<< HEAD
 <p>This documents summarizes the analysis I performed following the JHU Coursera Practical Machine learning course project instructions. The task was to develop a machine learning model to predict the class of exercise quality during an experiment. The goal of the experiment was to assess whether mistakes could be detected in weight-lifting exercises by using activity recognition techniques. Authors recorded users performing the same activity correctly and with a set of common mistakes with wearable sensors. Detailed information can be found <a href="http://groupware.les.inf.puc-rio.br/public/papers/2013.Velloso.QAR-WLE.pdf">here</a>.<br />Six articipants were asked to perform one set of 10 repetitions of the Unilateral Dumbbell Biceps Curl in five different fashions (classes):<br /> -A: exactly according to the specification<br /> -B: throwing the elbows to the front<br /> -C: lifting the dumbbell only halfway<br /> -D: lowering the dumbbell only halfway<br /> -E: throwing the hips to the front<br />Features were: Euler angles (roll, pitch and yaw, see <a href="https://en.wikipedia.org/wiki/Euler_angles">wikipedia</a>), as well as the raw accelerometer, gyroscope and magnetometer readings from wearable sensors in the participans’ glove, armband, lumbar belt and dumbbell. <a href="http://groupware.les.inf.puc-rio.br/har#ixzz48lsA1uQ3">Read more</a></p>
+=======
+<p>This documents summarizes the analysis I performed following the JHU Coursera Practical Machine learning course project instructions. The task was to develop a machine learning model to predict the class of exercise quality during an experiment. The goal of the experiment was to assess whether mistakes could be detected in weight-lifting exercises by using activity recognition techniques. Authors recorded users performing the same activity correctly and with a set of common mistakes with wearable sensors. Detailed information can be found <a href="http://groupware.les.inf.puc-rio.br/public/papers/2013.Velloso.QAR-WLE.pdf">here</a>.<br />Six articipants were asked to perform one set of 10 repetitions of the Unilateral Dumbbell Biceps Curl in five different fashions (classes):<br /> - A: exactly according to the specification<br /> - B: throwing the elbows to the front<br /> - C: lifting the dumbbell only halfway<br /> - D: lowering the dumbbell only halfway<br /> - E: throwing the hips to the front<br />Features were: Euler angles (roll, pitch and yaw, see <a href="https://en.wikipedia.org/wiki/Euler_angles">wikipedia</a>), as well as the raw accelerometer, gyroscope and magnetometer readings from wearable sensors in the participans’ glove, armband, lumbar belt and dumbbell. <a href="http://groupware.les.inf.puc-rio.br/har#ixzz48lsA1uQ3">Read more</a></p>
+>>>>>>> 9bf1e8bd560e4cc77d5f3bdb54e2a02221bdec5c
 </div>
 <div id="data-processing" class="section level2">
 <h2>Data processing</h2>
@@ -182,7 +186,11 @@ test&lt;-test[,-highCor]</code></pre>
 </div>
 <div id="models-training" class="section level2">
 <h2>Models training</h2>
+<<<<<<< HEAD
 <p>This is a classification problem, so I decided to evaluate the performance of 4 different approaches on the training data set: linear discrimination analysis (LDA), quadratic discrimination analysis (QDA), boosting trees (GBM: gradient boosting machine) and random forest (RF). In each case I used 10 k-fold cross validation for accuracy and out of the sample error stimation.</p>
+=======
+<p>This is a classification problem, so I decided to evaluate the performance of 3 different approaches on the training data set: linear discrimination analysis (LDA), quadratic discrimination analysis (QDA), boosting trees (GBM: gradient boosting machine) and random forest (RF). In each case I used 10 k-fold cross validation for accuracy and out of the sample error stimation.</p>
+>>>>>>> 9bf1e8bd560e4cc77d5f3bdb54e2a02221bdec5c
 <pre class="r"><code>########################################### Modeling##################
 ###Modelling with caret::train function with 10 k-fold cross validation
 tc&lt;-trainControl(method = &quot;cv&quot;,number = 10)
