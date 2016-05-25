@@ -14,19 +14,13 @@ knitr::opts_chunk$set(echo = TRUE,cache=TRUE)
 
 This documents summarizes the analysis I performed following the JHU Coursera Practical Machine learning course project instructions. The task was to develop a machine learning model to predict the class of exercise quality during an experiment. The goal of the experiment was to assess whether mistakes could be detected in weight-lifting exercises by using activity recognition techniques. Authors recorded users performing the same activity correctly and with a set of common mistakes with wearable sensors. Detailed information can be found [here](http://groupware.les.inf.puc-rio.br/public/papers/2013.Velloso.QAR-WLE.pdf).  
 Six articipants were asked to perform one set of 10 repetitions of the Unilateral Dumbbell Biceps Curl in five different fashions (classes):  
-<<<<<<< HEAD
+
  -A: exactly according to the specification  
  -B: throwing the elbows to the front  
  -C: lifting the dumbbell only halfway  
  -D: lowering the dumbbell only halfway  
  -E: throwing the hips to the front  
-=======
-    - A: exactly according to the specification  
-    - B: throwing the elbows to the front  
-    - C: lifting the dumbbell only halfway  
-    - D: lowering the dumbbell only halfway  
-    - E: throwing the hips to the front  
->>>>>>> 9bf1e8bd560e4cc77d5f3bdb54e2a02221bdec5c
+
 Features were: Euler angles (roll, pitch and yaw, see [wikipedia](https://en.wikipedia.org/wiki/Euler_angles)), as well as the raw accelerometer, gyroscope and magnetometer readings from wearable sensors in the participans’ glove, armband, lumbar belt and
 dumbbell. [Read more](http://groupware.les.inf.puc-rio.br/har#ixzz48lsA1uQ3)
 
@@ -98,11 +92,7 @@ test<-test[,-highCor]
 There were `r length(caret::nearZeroVar(training[,-53]))` predictors with near zero variance to exclude.  
 
 ##Models training  
-<<<<<<< HEAD
 This is a classification problem, so I decided to evaluate the performance of 4 different approaches on the training data set: linear discrimination analysis (LDA), quadratic discrimination analysis (QDA), boosting trees (GBM: gradient boosting machine) and random forest (RF). In each case I used 10 k-fold cross validation for accuracy and out of the sample error stimation.
-=======
-This is a classification problem, so I decided to evaluate the performance of 3 different approaches on the training data set: linear discrimination analysis (LDA), quadratic discrimination analysis (QDA), boosting trees (GBM: gradient boosting machine) and random forest (RF). In each case I used 10 k-fold cross validation for accuracy and out of the sample error stimation.
->>>>>>> 9bf1e8bd560e4cc77d5f3bdb54e2a02221bdec5c
 
 ```{r models training}
 ########################################### Modeling##################
